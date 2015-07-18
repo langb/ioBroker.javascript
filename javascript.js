@@ -1012,7 +1012,7 @@
                 }
 
                 // add adapter namespace if nothing given
-                if (pattern.id && pattern.id.indexOf('.') == -1) {
+                if (pattern.id && Object.prototype.toString.call(pattern.id)!="[object RegExp]" && pattern.id.indexOf('.') == -1) {
                     pattern.id = adapter.namespace + '.' + pattern.id;
                 }
 
