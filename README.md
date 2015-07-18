@@ -323,8 +323,13 @@ on({astro: "sunset", shift: 10}, function () {
 Returns state of id in form {val: value, ack: true/false, ts: timestamp, lc: lastchanged, from: origin}    
     
 ### getObject
-    getObject (id)
-Get description of object id as stored in DB.
+    getObject (id, object_type)
+Get description of object id as stored in DB. 
+
+The object type parameter is optional. When the object_type is set the function is searching
+up in the tree of objects until it finds the object with the given object_type.
+If you call the function getObject("hm-rpc.0.LE39487587.1.STATE","device") it starts searching
+from the state object and returns the device object that will have the id hm-rpc.0.LE39487587.
 
 ### createState
     createState(name, initialValue, forceCreation, common, native, callback)

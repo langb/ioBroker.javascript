@@ -1109,8 +1109,8 @@
                 adapter.log.warn('State "' + id + '" not found');
                 return null;
             },
-            getObject: function (id) {
-                return objects[id];
+            getObject: function (id, object_type) {
+                return getObjectUp(id, object_type);
             },
             createState: function (name, initValue, forceCreation, common, native, callback) {
                 if (typeof native == 'function') {
@@ -1941,5 +1941,34 @@
 
         cacheObjectEnums[idObj] = {enumIds: enumIds, enumNames: enumNames};
         return cacheObjectEnums[idObj];
+    }
+    
+    function getObjectUp(id, object_type){
+        if(objects[id]){
+            if(object_type==null || objects[id].type==object_type)
+                return objects[id];
+            else{
+                var obj = objects[id];
+                var obj_id = id;
+                var parts = obj_id.split('.');
+                                        
+                while(parts.length>0){
+                    parts.pop();
+                    obj_id = parts.join('.');
+                    obj = objects[obj_id];
+                    
+                    if(!obj || obj.type==object_type)
+                        break;
+                    else{   
+                        parts = obj_id.split('.');
+                        obj = null;
+                    }
+                }
+                
+                return obj;
+            }
+        }
+        
+        return null;
     }
 })();
