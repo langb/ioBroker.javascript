@@ -628,7 +628,7 @@
                         filterStates.push({attr: parts[0], value: parts[1].trim()});
                         _enums[i] = null;
                     } else {
-                        _enums[i] = 'enum.' + parts[0].trim() + '.' + parts[1].trim();
+                        _enums[i] = {attr: parts[0].trim(), value: parts[1].trim()};
                     }
                 }
 
@@ -670,12 +670,12 @@
                         pass = true;
                         for (var c = 0; c < commons.length; c++) {
                             if (!commons[c]) continue;
+                            if (!commons[c].r && commons[c].value) commons[c].r = generateRegExp(commons[c].value);
                             if (commons[c].attr == 'id') {
-                                if (!commons[c].r && commons[c].value) commons[c].r = new RegExp('^' + commons[c].value.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
                                 if (!commons[c].r || commons[c].r.test(id)) continue;
                             } else if (objects[id].common) {
                                 if (commons[c].value === undefined && objects[id].common[commons[c].attr] !== undefined) continue;
-                                if (objects[id].common[commons[c].attr] == commons[c].value) continue;
+                                if (!commons[c].r || commons[c].r.test(objects[id].common[commons[c].attr])) continue;
                             }
                             pass = false;
                             break;
@@ -683,12 +683,12 @@
                         if (!pass) continue;
                         for (var n = 0; n < natives.length; n++) {
                             if (!natives[n]) continue;
+                            if (!natives[n].r && natives[n].value) natives[n].r = generateRegExp(natives[n].value);
                             if (natives[n].attr == 'id') {
-                                if (!natives[n].r && natives[n].value) natives[n].r = new RegExp('^' + natives[n].value.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
                                 if (!natives[n].r || natives[n].r.test(id)) continue;
                             } else if (objects[id].native) {
                                 if (natives[n].value === undefined && objects[id].native[natives[n].attr] !== undefined) continue;
-                                if (objects[id].native[natives[n].attr] == natives[n].value) continue;
+                                if (!natives[n].r || natives[n].r.test(objects[id].native[natives[n].attr])) continue;
                             }
                             pass = false;
                             break;
@@ -697,11 +697,35 @@
 
                         if (_enums.length) {
                             var enumIds = [];
-                            getObjectEnumsSync(id, enumIds);
+                            var enumNames = [];
+                            getObjectEnumsSync(id, enumIds, enumNames);
 
                             for (var m = 0; m < _enums.length; m++) {
-                                if (!_enums[m]) continue;
-                                if (enumIds.indexOf(_enums[m]) != -1) continue;
+                                if (!_enums[m] && !enums[m].value) continue;
+
+                                var rID = generateRegExp(_enums[m].value, "enum." + _enums[m].attr + ".");
+                                var rName = generateRegExp(_enums[m].value);
+
+                                var enum_pass = false;
+                                if(rID){
+                                    enumIds.forEach( function(enumId){
+                                        if(rID.test(enumId)){
+                                            enum_pass = true;
+                                            return;
+                                        }
+                                    })
+                                }
+
+                                if(rName){
+                                    enumNames.forEach(function(enumName){
+                                        if(rName.test(enumName)){
+                                            enum_pass = true;
+                                            return;
+                                        }
+                                    });
+                                }
+
+                                if (enum_pass) continue;
                                 pass = false;
                                 break;
                             }
@@ -714,13 +738,7 @@
                                 pass = true;
                                 for (var st = 0; st < filterStates.length; st++) {
                                     if (!filterStates[st].r && filterStates[st].value) {
-                                        if (filterStates[st].value[0] == '*') {
-                                            filterStates[st].r = new RegExp(filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
-                                        } else if (filterStates[st].value[filterStates[st].value - 1] == '*'){
-                                            filterStates[st].r = new RegExp('^' + filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
-                                        } else {
-                                            filterStates[st].r = new RegExp(filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
-                                        }
+                                        filterStates[st].r = generateRegExp(filterStates[st].value);
                                     }
                                     if (!filterStates[st].r || filterStates[st].r.test(channels[id][s])) continue;
                                     pass = false;
@@ -740,12 +758,12 @@
                         pass = true;
                         for (var _c = 0; _c < commons.length; _c++) {
                             if (!commons[_c]) continue;
+                            if (!commons[_c].r && commons[_c].value) commons[_c].r = generateRegExp(commons[_c]);
                             if (commons[_c].attr == 'id') {
-                                if (!commons[_c].r && commons[_c].value) commons[_c].r = new RegExp('^' + commons[_c].value.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
                                 if (!commons[_c].r || commons[_c].r.test(id)) continue;
                             } else if (objects[id].common) {
                                 if (commons[_c].value === undefined && objects[id].common[commons[_c].attr] !== undefined) continue;
-                                if (objects[id].common[commons[_c].attr] == commons[_c].value) continue;
+                                if (!commons[_c].r || commons[_c].r.test(objects[id].common[commons[_c].attr])) continue;
                             }
                             pass = false;
                             break;
@@ -753,12 +771,12 @@
                         if (!pass) continue;
                         for (var n = 0; n < natives.length; n++) {
                             if (!natives[n]) continue;
+                            if (!natives[n].r && natives[n].value) natives[n].r = generateRegExp(natives[n].value);
                             if (natives[n].attr == 'id') {
-                                if (!natives[n].r && natives[n].value) natives[n].r = new RegExp('^' + natives[n].value.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
                                 if (!natives[n].r || natives[n].r.test(id)) continue;
                             } else if (objects[id].native) {
                                 if (natives[n].value === undefined && objects[id].native[natives[n].attr] !== undefined) continue;
-                                if (objects[i].native[natives[n].attr] == natives[n].value) continue;
+                                if (!natives[n].r || natives[n].r.test(objects[i].native[natives[n].attr])) continue;
                             }
                             pass = false;
                             break;
@@ -767,11 +785,35 @@
 
                         if (_enums.length) {
                             var enumIds = [];
-                            getObjectEnumsSync(id, enumIds);
+                            var enumNames = [];
+                            getObjectEnumsSync(id, enumIds, enumNames);
 
-                            for (var n = 0; n < _enums.length; n++) {
-                                if (!_enums[n]) continue;
-                                if (enumIds.indexOf(_enums[n]) != -1) continue;
+                            for (var m = 0; m < _enums.length; m++) {
+                                if (!_enums[m] && !enums[m].value) continue;
+
+                                var rID = generateRegExp(_enums[m].value, "enum." + _enums[m].attr + ".");
+                                var rName = generateRegExp(_enums[m].value);
+
+                                var enum_pass = false;
+                                if(rID){
+                                    enumIds.forEach( function(enumId){
+                                        if(rID.test(enumId)){
+                                            enum_pass = true;
+                                            return;
+                                        }
+                                    })
+                                }
+
+                                if(rName){
+                                    enumNames.forEach(function(enumName){
+                                        if(rName.test(enumName)){
+                                            enum_pass = true;
+                                            return;
+                                        }
+                                    });
+                                }
+
+                                if (enum_pass) continue;
                                 pass = false;
                                 break;
                             }
@@ -784,13 +826,7 @@
                                 pass = true;
                                 for (var st = 0; st < filterStates.length; st++) {
                                     if (!filterStates[st].r && filterStates[st].value) {
-                                        if (filterStates[st].value[0] == '*') {
-                                            filterStates[st].r = new RegExp(filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
-                                        } else if (filterStates[st].value[filterStates[st].value - 1] == '*'){
-                                            filterStates[st].r = new RegExp('^' + filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
-                                        } else {
-                                            filterStates[st].r = new RegExp(filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
-                                        }
+                                        filterStates[st].r = generateRegExp(filterStates[st].value);
                                     }
                                     if (!filterStates[st].r || filterStates[st].r.test(devices[id][s])) continue;
                                     pass = false;
@@ -802,7 +838,7 @@
                         }
                     }
                 } else {
-                    var r = (name && name != 'state') ? new RegExp('^' + name.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$') : null;
+                    var r = (name && name != 'state') ? generateRegExp(name) : null;
 
                     // state
                     for (id in states) {
@@ -812,12 +848,12 @@
                         if (commons.length) {
                             for (var c = 0; c < commons.length; c++) {
                                 if (!commons[c]) continue;
+                                if (!commons[c].r && commons[c].value) commons[c].r = generateRegExp(commons[c].value);
                                 if (commons[c].attr == 'id') {
-                                    if (!commons[c].r && commons[c].value) commons[c].r = new RegExp(commons[c].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
                                     if (!commons[c].r || commons[c].r.test(id)) continue;
                                 } else if (objects[id].common) {
                                     if (commons[c].value === undefined && objects[id].common[commons[c].attr] !== undefined) continue;
-                                    if (objects[id].common[commons[c].attr] == commons[c].value) continue;
+                                    if (!commons[c].r || commons[c].r.test(objects[id].common[commons[c].attr])) continue;
                                 }
                                 pass = false;
                                 break;
@@ -827,12 +863,12 @@
                         if (natives.length) {
                             for (var n = 0; n < natives.length; n++) {
                                 if (!natives[n]) continue;
+                                if (!natives[n].r && natives[n].value) natives[id].r = generateRegExp(natives[n].value);
                                 if (natives[n].attr == 'id') {
-                                    if (!natives[n].r && natives[n].value) natives[id].r = new RegExp(natives[n].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
                                     if (!natives[n].r || natives[n].r.test(id)) continue;
                                 } else if (objects[id].native) {
                                     if (natives[n].value === undefined && objects[id].native[natives[n].attr] !== undefined) continue;
-                                    if (objects[id].native[natives[n].attr] == natives[n].value) continue;
+                                    if (!natives[n].r || natives[n].r.test(objects[id].native[natives[n].attr])) continue;
                                 }
                                 pass = false;
                                 break;
@@ -843,13 +879,7 @@
                         if (filterStates.length) {
                             for (var st = 0; st < filterStates.length; st++) {
                                 if (!filterStates[st].r && filterStates[st].value) {
-                                    if (filterStates[st].value[0] == '*') {
-                                        filterStates[st].r = new RegExp(filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
-                                    } else if (filterStates[st].value[filterStates[st].value - 1] == '*'){
-                                        filterStates[st].r = new RegExp('^' + filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
-                                    } else {
-                                        filterStates[st].r = new RegExp(filterStates[st].value.replace(/\./g, '\\.').replace(/\*/g, '.*'));
-                                    }
+                                    filterStates[st].r = generateRegExp(filterStates[st].value);
                                 }
                                 if (!filterStates[st].r || filterStates[st].r.test(id)) continue;
                                 pass = false;
@@ -860,11 +890,35 @@
 
                         if (_enums.length) {
                             var enumIds = [];
-                            getObjectEnumsSync(id, enumIds);
+                            var enumNames = [];
+                            getObjectEnumsSync(id, enumIds, enumNames);
 
-                            for (var n = 0; n < _enums.length; n++) {
-                                if (!_enums[n]) continue;
-                                if (enumIds.indexOf(_enums[n]) != -1) continue;
+                            for (var m = 0; m < _enums.length; m++) {
+                                if (!_enums[m] && !enums[m].value) continue;
+
+                                var rID = generateRegExp(_enums[m].value, "enum." + _enums[m].attr + ".");
+                                var rName = generateRegExp(_enums[m].value);
+
+                                var enum_pass = false;
+                                if(rID){
+                                    enumIds.forEach( function(enumId){
+                                        if(rID.test(enumId)){
+                                            enum_pass = true;
+                                            return;
+                                        }
+                                    })
+                                }
+
+                                if(rName){
+                                    enumNames.forEach(function(enumName){
+                                        if(rName.test(enumName)){
+                                            enum_pass = true;
+                                            return;
+                                        }
+                                    });
+                                }
+
+                                if (enum_pass) continue;
                                 pass = false;
                                 break;
                             }
@@ -1350,39 +1404,21 @@
 
         // state id matching
         if (pattern.id) {
-            if (pattern.id instanceof RegExp) {
-                if (event.id && event.id.match(pattern.id)) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            if (event.id && event.id.match(generateRegExp(pattern.id))) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.id && pattern.id === event.id) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
 
         // state name matching
         if (pattern.name) {
-            if (pattern.name instanceof RegExp) {
-                if (event.common.name && event.common.name.match(pattern.id)) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            if (event.common.name && event.common.name.match(generateRegExp(pattern.name))) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.common.name && pattern.name === event.common.name) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
 
@@ -1705,130 +1741,76 @@
 
         // channelId matching
         if (pattern.channelId) {
-            if (pattern.channelId instanceof RegExp) {
-                if (event.channelId && event.channelId.match(pattern.channelId)) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            if (event.channelId && event.channelId.match(generateRegExp(pattern.channelId))) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.channelId && pattern.channelId === event.channelId) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
 
         // channelName matching
         if (pattern.channelName) {
-            if (pattern.channelName instanceof RegExp) {
-                if (event.channelName && event.channelName.match(pattern.channelName)) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            if (event.channelName && event.channelName.match(generateRegExp(pattern.channelName))) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.channelName && pattern.channelName === event.channelName) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
 
         // deviceId matching
         if (pattern.deviceId) {
-            if (pattern.deviceId instanceof RegExp) {
-                if (event.deviceId && event.deviceId.match(pattern.deviceId)) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            if (event.deviceId && event.deviceId.match(generateRegExp(pattern.deviceId))) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.deviceId && pattern.deviceId === event.deviceId) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
 
         // deviceName matching
         if (pattern.deviceName) {
-            if (pattern.deviceName instanceof RegExp) {
-                if (event.deviceName && event.deviceName.match(pattern.deviceName)) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            if (event.deviceName && event.deviceName.match(generateRegExp(pattern.deviceName))) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.deviceName && pattern.deviceName === event.deviceName) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
         var subMatched;
 
         // enumIds matching
         if (pattern.enumId) {
-            if (pattern.enumId instanceof RegExp) {
-                subMatched = false;
-                for (var i = 0; i < event.enumIds.length; i++) {
-                    if (event.enumIds[i].match(pattern.enumId)) {
-                        subMatched = true;
-                        break;
-                    }
+            subMatched = false;
+            for (var i = 0; i < event.enumIds.length; i++) {
+                if (event.enumIds[i].match(generateRegExp(pattern.enumId))) {
+                    subMatched = true;
+                    break;
                 }
-                if (subMatched) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            }
+            if (subMatched) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.enumIds && event.enumIds.indexOf(pattern.enumId) !== -1) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
 
         // enumNames matching
         if (pattern.enumName) {
-            if (pattern.enumName instanceof RegExp) {
-                subMatched = false;
-                for (var j = 0; j < event.enumNames.length; j++) {
-                    if (event.enumNames[j].match(pattern.enumName)) {
-                        subMatched = true;
-                        break;
-                    }
+            subMatched = false;
+            for (var j = 0; j < event.enumNames.length; j++) {
+                if (event.enumNames[j].match(generateRegExp(pattern.enumName))) {
+                    subMatched = true;
+                    break;
                 }
-                if (subMatched) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+            }
+            if (subMatched) {
+                if (pattern.logic === "or") return true;
+                matched = true;
             } else {
-                if (event.enumNames && event.enumNames.indexOf(pattern.enumName) !== -1) {
-                    if (pattern.logic === "or") return true;
-                    matched = true;
-                } else {
-                    if (pattern.logic === "and") return false;
-                }
+                if (pattern.logic === "and") return false;
             }
         }
 
@@ -1970,5 +1952,35 @@
         }
         
         return null;
+    }
+
+    function generateRegExp(filter, prefix, suffix){
+        prefix = prefix || "";
+        suffix = suffix || "";
+
+        if (Object.prototype.toString.call(filter) == '[object RegExp]')
+            return filter;
+
+        var regParts = filter.match(/^\/(.*?)\/([gim]*)$/);
+        if (regParts)
+            return new RegExp(prefix.replace(/\./g,"\\.") + regParts[1] + suffix.replace(/\./g,"\\."), regParts[2]);
+
+        if(filter[filter.length-1]!="*"){
+            if(suffix!="")
+                suffix += "$";
+            else
+                filter+= "$";
+        }
+
+        if(filter[0]!="*"){
+            if(prefix!="")
+                prefix = "^" + prefix;
+            else
+                filter="^" + filter;
+        }
+
+        filter=(prefix + filter + suffix).replace(/\./g,"\\.").replace(/\*/g, ".*");
+
+        return new RegExp(filter);
     }
 })();

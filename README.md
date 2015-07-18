@@ -218,6 +218,9 @@ You can use following parameters to specify the trigger:
 | oldFrom     | string     |       Old value is from defined adapter                                                                |
 | oldFromNe   | string     |       Old value is not from defined adapter                                                            |
 
+The  id, name, channelId, channelName, deviceId, deviceName, enumId or enumName can contain a wildcard (*) or a regular expression
+to search for.
+
 Examples:
 Trigger on all states with ID '*.STATE' if they are acknowledged and have new value "true".
 <code><pre>
@@ -410,7 +413,8 @@ Format of selector:
     '''name\[commonAttr=something1\]\(enumName=something2\){nativeName=something3}\[id=idfilter\]\[state.id=idfilter\]'''
 
 name can be: state, channel or device
-"idfilter" can have wildcards '*'
+"something1", "something2", "something3" and "idfilter" can have wildcards '*' or a regular expression.
+A regular expression have to start with a / and end with a /. It could be extended by an optional modifier (e.g. /Windows/i or /windows/).
 
 Prefixes ***(not implemented - should be discussed)*** :
  # - take by name and not by id
@@ -425,6 +429,7 @@ Prefixes ***(not implemented - should be discussed)*** :
 - $('channel{TYPE=BLIND}[state.id=*.LEVEL]') - Get all shutter of Homematic 
 - $('channel\[role=switch\]\(rooms=Living room\)\[state.id=*.STATE\]').setState(false) - Switch all states with .STATE of channels with role "switch" in "Living room" to false
 - $('channel\[state.id=*.STATE\]\(functions=Windows\)').each(function (id, i) {log(id);}); - print all states of enum "windows" in log
+- $('channel\[state.id=*.STATE\]\(functions=/Windows/i\)').each(function (id, i) {log(id);}); - print all states of enum "windows" in log (ignore case of function windows because of regular expression modifier)
 
 
 - $('.switch §"Living room") - Take states with all switches in 'Living room' ***(not implemented - should be discussed)***
